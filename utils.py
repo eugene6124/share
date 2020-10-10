@@ -8,7 +8,7 @@ from torch import from_numpy
 from torch.utils.data import Dataset, DataLoader, random_split, RandomSampler
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import resample
-from pca import getFeature
+from elasticsearch import Elasticsearch, helpers
 
 
 class MyDataLoader(Dataset):
@@ -67,7 +67,19 @@ def getRowData(accidentType=0, windows=1, classes=2):
         "ANGLE",
     ]
     columnY = ["acdnt_gae2_cnt", "dprs2_cnt", "sep2_cnt", "slp2_cnt", "inj_aplcnt2_cnt"]
-    rawData = pkl.load(open("data/dataset.pkl", "rb"))
+    es = Elasticsearch("121.162.20.187:9200", timeout=60)
+    rawData = pd.DataFrame.from_dict(
+        [
+            doc["_source"]
+            for doc in helpers.scan(
+                es,
+                index="dataset",
+                size=10000,
+            )
+        ]
+    )
+
+    print(len(rawData))
 
     x = rawData[columnX]
     y = rawData[columnY[accidentType]]
